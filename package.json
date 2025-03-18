@@ -18,7 +18,7 @@
   "homepage": "https://github.com/fielddaylab/the-yard",
   "devDependencies": {
     "browser-sync": "^2.13.0",
-    "gulp": "^3.9.1",
+    "gulp": "^4.0.2",
     "gulp-sass": "^2.3.1"
   }
 }
