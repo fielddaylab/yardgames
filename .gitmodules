@@ -40,6 +40,3 @@
 [submodule "game/crystal"]
 	path = game/crystal
 	url = https://github.com/fielddaylab/crystal.git
-[submodule "game/FloatingDropdown"]
-	path = game/FloatingDropdown
-	url = https://github.com/fielddaylab/FloatingDropdown.git
