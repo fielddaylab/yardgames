@@ -34,6 +34,13 @@ cleancycleconfig:
 
 #Deployment
 
+# Vault CDN build: one folder per game in dist/ (CI publishes it; see .github/workflows/publish.yml)
+dist:
+	@./build.sh dist
+
+.PHONY: dist
+
+
 deploy: cycleconfig
 	rsync -vrc * tyg@theyardgames.org:/httpdocs --exclude-from rsync-exclude
 
