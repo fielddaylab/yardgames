@@ -20,6 +20,6 @@ DoIT's Plesk deploys the sites straight from this repository (Plesk → Websites
 | `production` | https://theyardgames.org |
 | `wwwtest` | https://wwwtest.theyardgames.org |
 
-- Pushing to one of those branches runs `.github/workflows/plesk-deploy.yml`. It joins the campus VPN and calls that site's Plesk webhook (repository secrets `PLESK_WEBHOOK_PRODUCTION`/`PLESK_WEBHOOK_WWWTEST`), and Plesk pulls the branch into the site's `/httpdocs`. The webhooks (port 8443 on porky and petunia) only answer from the campus network, so GitHub's own webhooks can't reach them. If a deploy doesn't show up, re-run that workflow or use **Pull now** on the domain's Git page.
+- Pushing to one of those branches runs `.github/workflows/plesk-deploy.yml`. It joins the campus VPN, SSHes into porky with the fielddaylab.wisc.edu deploy key, and from there calls that site's Plesk webhook (repository secrets `PLESK_WEBHOOK_PRODUCTION`/`PLESK_WEBHOOK_WWWTEST`), and Plesk pulls the branch into the site's `/httpdocs`. The webhooks (port 8443 on porky and petunia) only answer inside the campus network, not from GitHub's webhooks and not over the VPN. If a deploy doesn't show up, re-run that workflow or use **Pull now** on the domain's Git page.
 - Plesk doesn't check out the `game/` submodules. The game folders already on the servers stay as they are, and the redirects cover them.
 - Keep `.htaccess` the same on both branches.
