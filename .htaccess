@@ -23,4 +23,4 @@ RewriteRule (^|/)waves([-_./&]|$) https://vaultlearninggames.org/wave-combinator
 RewriteRule (^|/)wind([-_./&]|$) https://vaultlearninggames.org/wind-simulator#play [R=301,L,NE,QSD]
 # game/iframe.html and game/index.html were stray copies of the balloon game.
 RewriteRule ^(beta/)?game/(iframe|index)\.html$ https://vaultlearninggames.org/hot-air-balloon#play [R=301,L,NE,QSD]
-RewriteRule ^ https://vaultlearninggames.org/?grade=5-8&subject=Science&maker=Field+Day+Lab [R=301,L,NE]
+RewriteRule ^ https://vaultlearninggames.org/?grade=5-8&subject=Science&maker=Field+Day+Lab#gg-filters [R=301,L,NE]
