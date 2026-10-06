@@ -4,7 +4,8 @@
 #   1. any path naming a game as a whole path segment -> that game's Vault page with the player open. This covers
 #      game/<name>.html, game/<name>/iframe.html, beta/game/..., copies at other paths (nitrogen/iframe.html,
 #      fieldday/yardgames/<name>/..., magnetism-Interactive/...) and mangled links like game/water.html&x=y;
-#   2. everything else (including model, which has no Vault page) -> the Vault home page,
+#   2. everything else (including model, which has no Vault page) -> the Vault library filtered to Field Day Lab's
+#      grade 5-8 science games,
 #      except /.well-known/, which Plesk needs to renew the HTTPS certificate.
 # mod_rewrite with QSD (drop query strings; Apache would append them after "#play") and NE (keep "#" as is).
 RewriteEngine On
@@ -22,4 +23,4 @@ RewriteRule (^|/)waves([-_./&]|$) https://vaultlearninggames.org/wave-combinator
 RewriteRule (^|/)wind([-_./&]|$) https://vaultlearninggames.org/wind-simulator#play [R=301,L,NE,QSD]
 # game/iframe.html and game/index.html were stray copies of the balloon game.
 RewriteRule ^(beta/)?game/(iframe|index)\.html$ https://vaultlearninggames.org/hot-air-balloon#play [R=301,L,NE,QSD]
-RewriteRule ^ https://vaultlearninggames.org/ [R=301,L,QSD]
+RewriteRule ^ https://vaultlearninggames.org/?grade=5-8&subject=Science&maker=Field+Day+Lab [R=301,L,NE]
