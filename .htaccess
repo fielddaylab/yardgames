@@ -1,0 +1,20 @@
+# theyardgames.org is retired: every URL 301s to Vault Learning Games (2026-10-05).
+# Same file on production (theyardgames.org) and wwwtest (wwwtest.theyardgames.org); Plesk deploys it with the
+# branch. See README.md. First match wins:
+#   1. each game (game/<name>.html and game/<name>/..., also under beta/) -> its Vault page with the player open;
+#   2. everything else (including game/model.html, which has no Vault page) -> the Vault home page,
+#      except /.well-known/, which Plesk needs to renew the HTTPS certificate.
+# mod_rewrite with QSD (drop query strings; Apache would append them after "#play") and NE (keep "#" as is).
+RewriteEngine On
+RewriteRule ^(beta/)?game/bacteria(\.html|/.*)?$ https://vaultlearninggames.org/antibiotic-resistance#play [R=301,L,NE,QSD]
+RewriteRule ^(beta/)?game/balloon(\.html|/.*)?$ https://vaultlearninggames.org/hot-air-balloon#play [R=301,L,NE,QSD]
+RewriteRule ^(beta/)?game/carbon(\.html|/.*)?$ https://vaultlearninggames.org/carbon-cycle-game#play [R=301,L,NE,QSD]
+RewriteRule ^(beta/)?game/crystal(\.html|/.*)?$ https://vaultlearninggames.org/crystal-cave#play [R=301,L,NE,QSD]
+RewriteRule ^(beta/)?game/earthquake(\.html|/.*)?$ https://vaultlearninggames.org/earthquake#play [R=301,L,NE,QSD]
+RewriteRule ^(beta/)?game/magnetism(\.html|/.*)?$ https://vaultlearninggames.org/magnet-hunt#play [R=301,L,NE,QSD]
+RewriteRule ^(beta/)?game/nitrogen(\.html|/.*)?$ https://vaultlearninggames.org/nitrogen-cycle-game#play [R=301,L,NE,QSD]
+RewriteRule ^(beta/)?game/water(\.html|/.*)?$ https://vaultlearninggames.org/water-cycle-game#play [R=301,L,NE,QSD]
+RewriteRule ^(beta/)?game/waves(\.html|/.*)?$ https://vaultlearninggames.org/wave-combinator#play [R=301,L,NE,QSD]
+RewriteRule ^(beta/)?game/wind(\.html|/.*)?$ https://vaultlearninggames.org/wind-simulator#play [R=301,L,NE,QSD]
+RewriteCond %{REQUEST_URI} !^/\.well-known/
+RewriteRule ^ https://vaultlearninggames.org/ [R=301,L,QSD]
