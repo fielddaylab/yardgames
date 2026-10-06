@@ -13,13 +13,13 @@ The games themselves are still built from this repository and published to Vault
 
 ## Deploying
 
-DoIT's Plesk deploys the sites straight from this repository (Plesk → Websites & Domains → the domain → Git). Nothing deploys from GitHub Actions.
+DoIT's Plesk deploys the sites straight from this repository (Plesk → Websites & Domains → the domain → Git).
 
 | Branch | Site |
 |---|---|
 | `production` | https://theyardgames.org |
 | `wwwtest` | https://wwwtest.theyardgames.org |
 
-- Plesk pulls a pushed branch and copies it into the site's `/httpdocs`, dotfiles included, so `.htaccess` deploys with it. If a push doesn't show up, use **Pull now** on the domain's Git page. Automatic pulls need the webhook URL from that page added to this repository's GitHub webhooks.
+- Pushing to one of those branches runs `.github/workflows/plesk-deploy.yml`. It joins the campus VPN and calls that site's Plesk webhook (repository secrets `PLESK_WEBHOOK_PRODUCTION`/`PLESK_WEBHOOK_WWWTEST`), and Plesk pulls the branch into the site's `/httpdocs`. The webhooks (port 8443 on porky and petunia) only answer from the campus network, so GitHub's own webhooks can't reach them. If a deploy doesn't show up, re-run that workflow or use **Pull now** on the domain's Git page.
 - Plesk doesn't check out the `game/` submodules. The game folders already on the servers stay as they are, and the redirects cover them.
 - Keep `.htaccess` the same on both branches.

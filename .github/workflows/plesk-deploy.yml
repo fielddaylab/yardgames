@@ -1,0 +1,55 @@
+name: Deploy (trigger Plesk pull)
+
+# The DoIT Plesk servers deploy this repository themselves (Plesk -> the domain -> Git), but only when
+# their webhook is called, and that webhook (port 8443) is reachable only from the campus network, so
+# GitHub's own webhooks can't call it. This job joins the campus VPN and calls the webhook for the
+# branch that was pushed:
+#   production -> PLESK_WEBHOOK_PRODUCTION (porky)
+#   wwwtest    -> PLESK_WEBHOOK_WWWTEST    (petunia)
+# Webhook URLs are in Plesk: Websites & Domains -> the domain -> Git -> repository settings.
+on:
+  push:
+    branches: [ production, wwwtest ]
+  workflow_dispatch:
+
+concurrency:
+  group: plesk-deploy-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+    - name: Pick the webhook for this branch
+      env:
+        PRODUCTION: ${{ secrets.PLESK_WEBHOOK_PRODUCTION }}
+        WWWTEST: ${{ secrets.PLESK_WEBHOOK_WWWTEST }}
+      run: |
+        case "$GITHUB_REF_NAME" in
+          production) hook="$PRODUCTION" ;;
+          wwwtest)    hook="$WWWTEST" ;;
+          *) echo "No Plesk site deploys $GITHUB_REF_NAME"; exit 1 ;;
+        esac
+        [ -n "$hook" ] || { echo "The webhook secret for $GITHUB_REF_NAME is not set"; exit 1; }
+        echo "::add-mask::$hook"
+        echo "HOOK=$hook" >> "$GITHUB_ENV"
+    - name: Connect to the campus VPN
+      env:
+        VPN_USER: ${{ secrets.FIELDDAY_VPN_USERNAME }}
+        VPN_PASS: ${{ secrets.FIELDDAY_VPN_PASSWORD }}
+      run: |
+        [ -n "$VPN_USER" ] || { echo "FIELDDAY_VPN_USERNAME/PASSWORD are not available to this repository"; exit 1; }
+        sudo apt-get -qq update && sudo apt-get -qq install openconnect
+        echo "$VPN_PASS" | sudo openconnect --background --protocol=gp -u "$VPN_USER" --passwd-on-stdin soe.vpn.wisc.edu
+        for i in $(seq 1 30); do ip link show tun0 >/dev/null 2>&1 && exit 0; sleep 2; done
+        echo "VPN did not come up"; exit 1
+    - name: Call the Plesk webhook
+      run: |
+        for i in $(seq 1 10); do
+          code=$(curl -s -o /dev/null -m 60 -X POST -H 'Content-Type: application/json' -d '{}' -w '%{http_code}' "$HOOK" || true)
+          echo "attempt $i: HTTP $code"
+          case "$code" in 2??) echo "Plesk is pulling $GITHUB_REF_NAME"; exit 0 ;; esac
+          sleep 15
+        done
+        exit 1
