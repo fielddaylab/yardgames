@@ -4,7 +4,9 @@ name: Deploy (trigger Plesk pull)
 # their webhook is called, and that webhook (port 8443) only answers inside the campus network: not from
 # GitHub's webhooks, and not even over the campus VPN. So this job joins the VPN, SSHes into porky with
 # the fielddaylab.wisc.edu deploy key, and calls the pushed branch's webhook from there (porky's own
-# webhooks via 127.0.0.1):
+# webhooks via 127.0.0.1). The VPN account allows one session at a time, so runs that overlap (both
+# branches, or both repositories) knock each other off; each round reconnects after a random pause and
+# tries again until its call gets through:
 #   production -> PLESK_WEBHOOK_PRODUCTION (porky)
 #   wwwtest    -> PLESK_WEBHOOK_WWWTEST    (petunia)
 # Webhook URLs are in Plesk: Websites & Domains -> the domain -> Git -> repository settings.
@@ -35,30 +37,28 @@ jobs:
         [ -n "$hook" ] || { echo "The webhook secret for $GITHUB_REF_NAME is not set"; exit 1; }
         echo "::add-mask::$hook"
         echo "HOOK=$hook" >> "$GITHUB_ENV"
-    - name: Connect to the campus VPN
+    - name: Install OpenConnect
+      run: sudo apt-get -qq update && sudo apt-get -qq install openconnect
+    - name: Call the Plesk webhook from porky over the campus VPN
       env:
         VPN_USER: ${{ secrets.FIELDDAY_VPN_USERNAME }}
         VPN_PASS: ${{ secrets.FIELDDAY_VPN_PASSWORD }}
-      run: |
-        [ -n "$VPN_USER" ] || { echo "FIELDDAY_VPN_USERNAME/PASSWORD are not available to this repository"; exit 1; }
-        sudo apt-get -qq update && sudo apt-get -qq install openconnect
-        echo "$VPN_PASS" | sudo openconnect --background --protocol=gp -u "$VPN_USER" --passwd-on-stdin soe.vpn.wisc.edu
-        for i in $(seq 1 30); do ip link show tun0 >/dev/null 2>&1 && exit 0; sleep 2; done
-        echo "VPN did not come up"; exit 1
-    - name: Call the Plesk webhook from porky
-      env:
         DEST: ${{ secrets.FIELDDAY_WISC_EDU_DEPLOY_USER }}@${{ secrets.FIELDDAY_WISC_EDU_DEPLOY_HOST }}
         KEY: ${{ secrets.FIELDDAY_WISC_EDU_DEPLOY_KEY }}
       run: |
+        [ -n "$VPN_USER" ] || { echo "FIELDDAY_VPN_USERNAME/PASSWORD are not available to this repository"; exit 1; }
         [ -n "$KEY" ] || { echo "FIELDDAY_WISC_EDU_DEPLOY_* are not available to this repository"; exit 1; }
         mkdir -p ~/.ssh && printf '%s\n' "$KEY" > ~/.ssh/key && chmod 600 ~/.ssh/key
         # porky's own webhooks via 127.0.0.1; petunia by address (the deploy account's chroot can't resolve names)
         url=$(printf '%s' "$HOOK" | sed -e 's#//porky.doit.wisc.edu:#//127.0.0.1:#' -e 's#//petunia.doit.wisc.edu:#//128.104.80.12:#')
-        for i in $(seq 1 10); do
+        for round in $(seq 1 8); do
+          sudo pkill openconnect 2>/dev/null || true; sleep 2
+          echo "$VPN_PASS" | sudo openconnect --background --quiet --protocol=gp -u "$VPN_USER" --passwd-on-stdin soe.vpn.wisc.edu >/dev/null 2>&1 || true
+          for i in $(seq 1 30); do ip link show tun0 >/dev/null 2>&1 && break; sleep 2; done
           code=$(ssh -q -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=20 -i ~/.ssh/key "$DEST" \
             "curl -sk -o /dev/null -m 60 -X POST -H 'Content-Type: application/json' -d '{}' -w '%{http_code}' '$url' 2>&1" || true)
-          echo "attempt $i: HTTP ${code:-none}"
+          echo "round $round: HTTP ${code:-none}"
           case "$code" in 2??) echo "Plesk is pulling $GITHUB_REF_NAME"; exit 0 ;; esac
-          sleep 15
+          sleep $((5 + RANDOM % 26))
         done
         exit 1
