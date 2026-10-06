@@ -52,10 +52,11 @@ jobs:
       run: |
         [ -n "$KEY" ] || { echo "FIELDDAY_WISC_EDU_DEPLOY_* are not available to this repository"; exit 1; }
         mkdir -p ~/.ssh && printf '%s\n' "$KEY" > ~/.ssh/key && chmod 600 ~/.ssh/key
-        url=$(printf '%s' "$HOOK" | sed 's#//porky.doit.wisc.edu:#//127.0.0.1:#')
+        # porky's own webhooks via 127.0.0.1; petunia by address (the deploy account's chroot can't resolve names)
+        url=$(printf '%s' "$HOOK" | sed -e 's#//porky.doit.wisc.edu:#//127.0.0.1:#' -e 's#//petunia.doit.wisc.edu:#//128.104.80.12:#')
         for i in $(seq 1 10); do
           code=$(ssh -q -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=20 -i ~/.ssh/key "$DEST" \
-            "curl -sk -o /dev/null -m 60 -X POST -H 'Content-Type: application/json' -d '{}' -w '%{http_code}' '$url'" || true)
+            "curl -sk -o /dev/null -m 60 -X POST -H 'Content-Type: application/json' -d '{}' -w '%{http_code}' '$url' 2>&1" || true)
           echo "attempt $i: HTTP ${code:-none}"
           case "$code" in 2??) echo "Plesk is pulling $GITHUB_REF_NAME"; exit 0 ;; esac
           sleep 15
