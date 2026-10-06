@@ -5,7 +5,7 @@ Homepage for The Yard
 
 Since 2026-10-05, theyardgames.org and wwwtest.theyardgames.org send every visitor to [Vault Learning Games](https://vaultlearninggames.org) with a permanent (301) redirect, set in `.htaccess`:
 
-- Each game with a Vault page (`game/<name>.html`, `game/<name>/…`, and the old copies under `beta/game/`) goes to that page with the player open: `https://vaultlearninggames.org/<slug>#play`.
+- Any path that names one of the 10 games as a whole path segment goes to that game's Vault page with the player open (`https://vaultlearninggames.org/<slug>#play`). That covers `game/<name>.html`, `game/<name>/iframe.html`, the old copies under `beta/game/`, copies at other paths (`nitrogen/iframe.html`, `fieldday/yardgames/<name>/…`), and mangled links like `game/water.html&x=y`. The paths come from the site's Google Analytics landing pages, 2026-10-05.
 - Everything else goes to the Vault home page. That includes `game/model.html`, which has no Vault page.
 - `/.well-known/` is not redirected, so Plesk can keep renewing the HTTPS certificate.
 
